@@ -3,10 +3,10 @@ import './App.css'
 import { checkBackendHealth } from './lib/api'
 
 function App() {
-  const [activeWorkspace, setActiveWorkspace] = useState('Study')
-  const [goal, setGoal] = useState('')
   const [backendStatus, setBackendStatus] = useState('checking')
   const [backendMessage, setBackendMessage] = useState('Connecting to backend...')
+  const [activeWorkspace, setActiveWorkspace] = useState('Study')
+  const [goal, setGoal] = useState('')
   const [materials, setMaterials] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('shiftdesk-materials')) || []
@@ -14,35 +14,28 @@ function App() {
       return []
     }
   })
-
   const [selectedCategory, setSelectedCategory] = useState('All')
 
   useEffect(() => {
-    localStorage.setItem(
-      'shiftdesk-materials',
-      JSON.stringify(materials)
-    )
-  }, [materials])
-
-  useEffect(() => {
-    async function checkHealth() {
-      try {
-        const data = await checkBackendHealth()
+    checkBackendHealth()
+      .then((data) => {
         setBackendStatus('healthy')
         setBackendMessage(`${data.app} is connected on port 5000`)
-      } catch (error) {
+      })
+      .catch((error) => {
+        console.error('Backend connection failed:', error)
         setBackendStatus('error')
         setBackendMessage('Backend connection failed. Start Flask on port 5000.')
-      }
-    }
-
-    checkHealth()
+      })
   }, [])
+
+  useEffect(() => {
+    localStorage.setItem('shiftdesk-materials', JSON.stringify(materials))
+  }, [materials])
 
   function handleFileUpload(event) {
     const files = Array.from(event.target.files || [])
-
-    const newMaterials = files.map(file => ({
+    const newMaterials = files.map((file) => ({
       id: `${Date.now()}-${file.name}-${Math.random()}`,
       name: file.name,
       type: file.type || 'Unknown file type',
@@ -52,13 +45,32 @@ function App() {
       url: URL.createObjectURL(file)
     }))
 
-    setMaterials(previous => [...previous, ...newMaterials])
+    setMaterials((previous) => [...previous, ...newMaterials])
     event.target.value = ''
   }
 
   function removeMaterial(id) {
-    setMaterials(previous => previous.filter(file => file.id !== id))
+    setMaterials((previous) => previous.filter((file) => file.id !== id))
   }
+
+  function organiseGoal() {
+    const text = goal.trim().toLowerCase()
+    if (!text) {
+      alert('Please enter a goal first!')
+      return
+    }
+
+    const projectKeywords = [
+      'project', 'milestone', 'development', 'coding',
+      'build an app', 'build a website', 'prototype'
+    ]
+    const isProject = projectKeywords.some((keyword) => text.includes(keyword))
+    setActiveWorkspace(isProject ? 'Project' : 'Study')
+  }
+
+  const workspaceMaterials = materials.filter(
+    (file) => file.workspace === activeWorkspace
+  )
 
   return (
     <div className="app">
@@ -90,11 +102,11 @@ function App() {
         <header className="topbar">
           <span>YOUR PERSONAL WORKSPACE</span>
           <span className={`status ${backendStatus}`}>
-            {backendStatus === 'healthy'
-              ? '● Backend connected'
+            ● {backendStatus === 'healthy'
+              ? 'Backend connected'
               : backendStatus === 'error'
-                ? '● Connection issue'
-                : '● Checking backend...'}
+                ? 'Connection issue'
+                : 'Checking connection...'}
           </span>
         </header>
 
@@ -116,33 +128,7 @@ function App() {
               value={goal}
               onChange={(event) => setGoal(event.target.value)}
             />
-            <button
-              className="goal-button"
-              onClick={() => {
-                const text = goal.trim().toLowerCase()
-
-                if (!text) {
-                  alert('Please enter a goal first!')
-                  return
-                }
-
-                const projectKeywords = [
-                  'project',
-                  'milestone',
-                  'development',
-                  'coding',
-                  'build an app',
-                  'build a website',
-                  'prototype'
-                ]
-
-                const isProject = projectKeywords.some(keyword =>
-                  text.includes(keyword)
-                )
-
-                setActiveWorkspace(isProject ? 'Project' : 'Study')
-              }}
-            >
+            <button className="goal-button" onClick={organiseGoal}>
               Organise my work ↗
             </button>
           </div>
@@ -170,14 +156,12 @@ function App() {
               <p>Break your learning goals into manageable tasks.</p>
               <span className="card-footer">PLAN YOUR SESSION →</span>
             </article>
-
             <article className="feature-card">
               <span className="card-icon">📝</span>
               <h3>Subject Notes</h3>
               <p>Keep important concepts and revision notes together.</p>
               <span className="card-footer">KEEP YOUR NOTES →</span>
             </article>
-
             <article className="feature-card">
               <span className="card-icon">⏱️</span>
               <h3>Focus Time</h3>
@@ -193,14 +177,12 @@ function App() {
               <p>Organise development work into clear next steps.</p>
               <span className="card-footer">PLAN YOUR WORK →</span>
             </article>
-
             <article className="feature-card">
               <span className="card-icon">🎯</span>
               <h3>Milestones</h3>
               <p>Keep track of important project goals.</p>
               <span className="card-footer">TRACK PROGRESS →</span>
             </article>
-
             <article className="feature-card">
               <span className="card-icon">💡</span>
               <h3>Project Notes</h3>
@@ -209,6 +191,50 @@ function App() {
             </article>
           </section>
         )}
+
+        <section className="materials-section">
+          <div className="materials-heading">
+            <div>
+              <p className="eyebrow">YOUR RESOURCES</p>
+              <h2>{activeWorkspace === 'Study' ? 'Study Materials' : 'Project Files'}</h2>
+              <p className="materials-description">Keep your important files in one place.</p>
+            </div>
+            <label className="upload-button">
+              + Upload files
+              <input type="file" multiple onChange={handleFileUpload} hidden />
+            </label>
+          </div>
+
+          <div className="materials-list">
+            {workspaceMaterials.length === 0 ? (
+              <div className="empty-materials">
+                <span>📂</span>
+                <h3>No materials yet</h3>
+                <p>Upload your first file to get started.</p>
+              </div>
+            ) : (
+              workspaceMaterials.map((file) => (
+                <article className="material-item" key={file.id}>
+                  <span className="file-icon">📄</span>
+                  <div className="material-info">
+                    <strong>{file.name}</strong>
+                    <span>{(file.size / 1024).toFixed(1)} KB</span>
+                  </div>
+                  <a href={file.url} target="_blank" rel="noreferrer" className="open-file">
+                    Open ↗
+                  </a>
+                  <button
+                    className="remove-file"
+                    onClick={() => removeMaterial(file.id)}
+                    aria-label={`Remove ${file.name}`}
+                  >
+                    ✕
+                  </button>
+                </article>
+              ))
+            )}
+          </div>
+        </section>
 
         <footer>SHIFTDESK · YOUR GOALS, ONE SPACE AT A TIME 🌿</footer>
       </main>
