@@ -3,18 +3,13 @@ import './App.css'
 import { checkBackendHealth } from './lib/api'
 
 function App() {
-  // Backend connection status
-  const [backendStatus, setBackendStatus] = useState(
-    'Checking connection...'
+  const [backendStatus, setBackendStatus] = useState('checking')
+  const [backendMessage, setBackendMessage] = useState(
+    'Connecting to backend...'
   )
-
-  // Active workspace
   const [activeWorkspace, setActiveWorkspace] = useState('Study')
-
-  // Goal input
   const [goal, setGoal] = useState('')
 
-  // Uploaded materials
   const [materials, setMaterials] = useState(() => {
     try {
       return JSON.parse(
@@ -25,22 +20,23 @@ function App() {
     }
   })
 
-  // Selected file category
   const [selectedCategory, setSelectedCategory] = useState('All')
 
-  // Check Flask backend connection
   useEffect(() => {
     checkBackendHealth()
-      .then(() => {
-        setBackendStatus('Backend connected')
+      .then((data) => {
+        setBackendStatus('healthy')
+        setBackendMessage(`${data.app} is connected on port 5000`)
       })
       .catch((error) => {
         console.error('Backend connection failed:', error)
-        setBackendStatus('Connection issue')
+        setBackendStatus('error')
+        setBackendMessage(
+          'Backend connection failed. Start Flask on port 5000.'
+        )
       })
   }, [])
 
-  // Save material information in localStorage
   useEffect(() => {
     localStorage.setItem(
       'shiftdesk-materials',
@@ -48,7 +44,6 @@ function App() {
     )
   }, [materials])
 
-  // Upload files
   function handleFileUpload(event) {
     const files = Array.from(event.target.files || [])
 
@@ -73,14 +68,12 @@ function App() {
     event.target.value = ''
   }
 
-  // Remove uploaded files
   function removeMaterial(id) {
     setMaterials((previous) =>
       previous.filter((file) => file.id !== id)
     )
   }
 
-  // Organise the user's goal
   function organiseGoal() {
     const text = goal.trim().toLowerCase()
 
@@ -106,14 +99,12 @@ function App() {
     setActiveWorkspace(isProject ? 'Project' : 'Study')
   }
 
-  // Display only materials for the active workspace
   const workspaceMaterials = materials.filter(
     (file) => file.workspace === activeWorkspace
   )
 
   return (
     <div className="app">
-      {/* Sidebar */}
       <aside className="sidebar">
         <h2 className="logo">✦ ShiftDesk</h2>
 
@@ -147,18 +138,20 @@ function App() {
         </div>
       </aside>
 
-      {/* Main content */}
       <main className="main-content">
-        {/* Top bar */}
         <header className="topbar">
           <span>YOUR PERSONAL WORKSPACE</span>
 
-          <span className="status">
-            ● {backendStatus}
+          <span className={`status ${backendStatus}`}>
+            ●{' '}
+            {backendStatus === 'healthy'
+              ? 'Backend connected'
+              : backendStatus === 'error'
+                ? 'Connection issue'
+                : 'Checking connection...'}
           </span>
         </header>
 
-        {/* Welcome section */}
         <section className="welcome">
           <p className="eyebrow">
             A LITTLE PROGRESS EVERY DAY
@@ -175,7 +168,6 @@ function App() {
           </p>
         </section>
 
-        {/* Goal organiser */}
         <section className="goal-card">
           <label htmlFor="goal">
             WHAT WOULD YOU LIKE TO WORK ON?
@@ -202,9 +194,12 @@ function App() {
             ✨ Tell us your goal to get started. Smart goal
             interpretation comes later.
           </p>
+
+          <p className="backend-message">
+            {backendMessage}
+          </p>
         </section>
 
-        {/* Workspace heading */}
         <section className="workspace-heading">
           <div>
             <p className="eyebrow">YOUR SPACE</p>
@@ -218,7 +213,6 @@ function App() {
           </span>
         </section>
 
-        {/* Workspace cards */}
         {activeWorkspace === 'Study' ? (
           <section className="cards">
             <article className="feature-card">
@@ -291,7 +285,6 @@ function App() {
           </section>
         )}
 
-        {/* Materials section */}
         <section className="materials-section">
           <div className="materials-heading">
             <div>
@@ -320,7 +313,6 @@ function App() {
             </label>
           </div>
 
-          {/* Uploaded file list */}
           <div className="materials-list">
             {workspaceMaterials.length === 0 ? (
               <div className="empty-materials">
@@ -368,7 +360,6 @@ function App() {
           </div>
         </section>
 
-        {/* Footer */}
         <footer>
           SHIFTDESK · YOUR GOALS, ONE SPACE AT A TIME 🌿
         </footer>
