@@ -2,6 +2,13 @@ import { useEffect, useState } from 'react'
 import './App.css'
 
 function App() {
+const [backendStatus, setBackendStatus] = useState('Checking connection...')
+
+useEffect(() => {
+  checkBackendHealth()
+    .then(() => setBackendStatus('Backend connected'))
+    .catch(() => setBackendStatus('Connection issue'))
+}, [])
 const [activeWorkspace, setActiveWorkspace] = useState('Study')
 const [goal, setGoal] = useState('')
 const [materials, setMaterials] = useState(() => {
