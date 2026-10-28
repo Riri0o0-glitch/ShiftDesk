@@ -1,13 +1,55 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import './App.css'
 
 function App() {
 const [activeWorkspace, setActiveWorkspace] = useState('Study')
 const [goal, setGoal] = useState('')
+const [materials, setMaterials] = useState(() => {
+  try {
+    return JSON.parse(localStorage.getItem('shiftdesk-materials')) || []
+  } catch {
+    return []
+  }
+})
+
+const [selectedCategory, setSelectedCategory] = useState('All')
+
+useEffect(() => {
+  localStorage.setItem(
+    'shiftdesk-materials',
+    JSON.stringify(materials)
+  )
+}, [materials])
+function handleFileUpload(event) {
+const files = Array.from(event.target.files || [])
+
+const newMaterials = files.map(file => ({
+  id: `${Date.now()}-${file.name}-${Math.random()}`,
+  name: file.name,
+  type: file.type || 'Unknown file type',
+  size: file.size,
+  workspace: activeWorkspace,
+  category: selectedCategory === 'All'
+    ? 'Other'
+    : selectedCategory,
+  url: URL.createObjectURL(file)
+}))
+
+setMaterials(previous => [...previous, ...newMaterials])
+
+event.target.value = ''
+
+}
+
+function removeMaterial(id) {
+setMaterials(previous =>
+previous.filter(file => file.id !== id)
+)
+}
+
 
 return ( <div className="app"> <aside className="sidebar"> <h2 className="logo">✦ ShiftDesk</h2> <p className="sidebar-label">YOUR WORKSPACE</p>
 
-```
     <button
       className={activeWorkspace === 'Study' ? 'nav-item active' : 'nav-item'}
       onClick={() => setActiveWorkspace('Study')}
@@ -55,12 +97,29 @@ return ( <div className="app"> <aside className="sidebar"> <h2 className="logo">
         <button
           className="goal-button"
           onClick={() => {
-            if (goal.trim()) {
-              setActiveWorkspace(
-                /project|milestone/i.test(goal) ? 'Project' : 'Study'
-              )
-            }
-          }}
+  const text = goal.trim().toLowerCase()
+
+  if (!text) {
+    alert('Please enter a goal first!')
+    return
+  }
+
+  const projectKeywords = [
+    'project',
+    'milestone',
+    'development',
+    'coding',
+    'build an app',
+    'build a website',
+    'prototype'
+  ]
+
+  const isProject = projectKeywords.some(keyword =>
+    text.includes(keyword)
+  )
+
+  setActiveWorkspace(isProject ? 'Project' : 'Study')
+}}
         >
           Organise my work ↗
         </button>
@@ -135,4 +194,6 @@ return ( <div className="app"> <aside className="sidebar"> <h2 className="logo">
 )
 }
 
-export default App
+
+    <footer>SHIFTDESK · YOUR GOALS, ONE SPACE AT A TIME 🌿</footer>
+    export default App
