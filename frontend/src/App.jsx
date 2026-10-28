@@ -193,7 +193,4 @@ return ( <div className="app"> <aside className="sidebar"> <h2 className="logo">
 
 )
 }
-
-
-    <footer>SHIFTDESK · YOUR GOALS, ONE SPACE AT A TIME 🌿</footer>
-    export default App
+export default App
