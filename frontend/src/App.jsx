@@ -255,8 +255,7 @@ return ( <div className="app"> <aside className="sidebar"> <h2 className="logo">
     )}
   </div>
 </section>
-
-    <footer>SHIFTDESK · YOUR GOALS, ONE SPACE AT A TIME 🌿</footer>
+        <footer>SHIFTDESK · YOUR GOALS, ONE SPACE AT A TIME 🌿</footer>
   </main>
 </div>
 
