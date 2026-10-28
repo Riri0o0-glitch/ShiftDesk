@@ -187,6 +187,75 @@ return ( <div className="app"> <aside className="sidebar"> <h2 className="logo">
       </section>
     )}
 
+    <section className="materials-section">
+  <div className="materials-heading">
+    <div>
+      <p className="eyebrow">YOUR RESOURCES</p>
+      <h2>
+        {activeWorkspace === 'Study'
+          ? 'Study Materials'
+          : 'Project Files'}
+      </h2>
+      <p className="materials-description">
+        Keep your important files in one place.
+      </p>
+    </div>
+
+    <label className="upload-button">
+      + Upload files
+      <input
+        type="file"
+        multiple
+        onChange={handleFileUpload}
+        hidden
+      />
+    </label>
+  </div>
+
+  <div className="materials-list">
+    {materials.filter(file =>
+      file.workspace === activeWorkspace
+    ).length === 0 ? (
+      <div className="empty-materials">
+        <span>📂</span>
+        <h3>No materials yet</h3>
+        <p>Upload your first file to get started.</p>
+      </div>
+    ) : (
+      materials
+        .filter(file => file.workspace === activeWorkspace)
+        .map(file => (
+          <article className="material-item" key={file.id}>
+            <span className="file-icon">📄</span>
+
+            <div className="material-info">
+              <strong>{file.name}</strong>
+              <span>
+                {(file.size / 1024).toFixed(1)} KB
+              </span>
+            </div>
+
+            <a
+              href={file.url}
+              target="_blank"
+              rel="noreferrer"
+              className="open-file"
+            >
+              Open ↗
+            </a>
+
+            <button
+              className="remove-file"
+              onClick={() => removeMaterial(file.id)}
+            >
+              ✕
+            </button>
+          </article>
+        ))
+    )}
+  </div>
+</section>
+
     <footer>SHIFTDESK · YOUR GOALS, ONE SPACE AT A TIME 🌿</footer>
   </main>
 </div>
